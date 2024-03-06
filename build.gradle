@@ -1,0 +1,115 @@
+plugins { 
+    id 'eclipse'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '5.+'
+    id 'org.spongepowered.mixin' version '0.7.+'
+
+}
+
+group= "team.creative" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(8)
+
+minecraft {
+    mappings channel: 'official', version: "1.16.5"
+ 
+    // Default run configurations.
+    // These can be tweaked, removed, or duplicated as needed.
+    runs {
+        client {
+            taskName "cmdcam_client"
+            workingDirectory project.file('run')
+
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                cmdcam {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            taskName "cmdcam_server"
+            workingDirectory project.file('run')
+
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                cmdcam {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+repositories {
+    maven {
+        url "https://cursemaven.com"
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:1.16.5-36.2.34"
+    
+    // Apply Mixin AP
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    
+    implementation fg.deobf('curse.maven:creativecore-257814:3419983')
+}
+
+jar {
+  duplicatesStrategy = DuplicatesStrategy.INCLUDE
+  archiveFileName.set(project.modname + "_FORGE_v" + project.version + "_mc" + project.minecraft_version + ".jar")
+}
+
+processResources {
+    filesMatching("*mods.toml") {
+        expand "mod_version": project.version
+    }
+}
+
+mixin {
+    // MixinGradle Settings
+    // add sourceSets.main, 'cmdcam.mixin.refmap.json'
+     
+    // config 'cmdcam.mixins.json'
+}
+
+// Example configuration to allow publishing using the maven-publish plugin
+// This is the preferred method to reobfuscate your jar file
+jar.finalizedBy('reobfJar')
+// However if you are in a multi-project build, dev time needs unobfed jar files, so you can delay the obfuscation until publishing by doing
+// publish.dependsOn('reobfJar')
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact jar
+        }
+    }
+    repositories {
+        maven {
+            url "file://${project.projectDir}/mcmodsrepo"
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title": project.modname,
+            "Specification-Vendor": "CreativeMD",
+            "Specification-Version": project.version,
+            "Implementation-Title": project.name,
+            "Implementation-Version"  : project.version,
+            "Implementation-Vendor": "CreativeMD",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
